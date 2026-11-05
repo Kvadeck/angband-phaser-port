@@ -11,7 +11,7 @@ When a module is `partial`, list the intentional differences under Notes.
 
 | Upstream (C) | TypeScript | Status | Notes |
 |---|---|---|---|
-| `src/z-type.h` / `src/z-type.c` | `src/game/z/` | stub | `loc` and basic types |
+| `src/z-type.h` / `src/z-type.c` | `src/game/z/type.ts` | partial | `Loc` + helpers (`locEq`, `locSum`, …); no `randLoc` (needs z-rand), no `point_set` / `grouper` yet; camelCase; Loc is readonly (always new via helpers) |
 | `src/z-rand.h` / `src/z-rand.c` | `src/game/z/` | stub | RNG for gen/combat |
 | `src/z-queue.h` / `src/z-queue.c` | `src/game/z/` | stub | as needed by FOV / cmds |
 | `src/cave.h` / `src/cave.c` | `src/game/cave/` | stub | `chunk`, `square`, feats |
