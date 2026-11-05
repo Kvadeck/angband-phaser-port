@@ -1,0 +1,3 @@
+[submodule "vendor/angband"]
+	path = vendor/angband
+	url = https://github.com/angband/angband.git
