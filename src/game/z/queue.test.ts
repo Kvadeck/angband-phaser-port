@@ -1,39 +1,64 @@
 import { describe, expect, it } from 'vitest'
 import {
-  loc,
-  locDiff,
-  locEq,
-  locIsZero,
-  locOffset,
-  locSum,
+  qNew,
+  qPush,
+  qPop,
+  qLen,
 } from '@/game/z'
 
-describe('loc (port of z-type)', () => {
-  it('builds a coordinate pair', () => {
-    expect(loc(3, 7)).toEqual({ x: 3, y: 7 })
+describe('queue (port of z-queue)', () => {
+  
+  it('Сreate new queue', () => {
+    const q = qNew(0)
+    expect(q.size).toBe(1)
+    expect(q.head).toBe(0)
+    expect(q.tail).toBe(0)
+    expect(q.data).toHaveLength(1)
+    expect(qLen(q)).toBe(0)
   })
 
-  it('compares equality', () => {
-    expect(locEq(loc(1, 2), loc(1, 2))).toBe(true)
-    expect(locEq(loc(1, 2), loc(2, 1))).toBe(false)
+  it('Push then pop in FIFO order', () => {
+    const q = qNew(3)
+    
+    qPush(q, 1)
+    qPush(q, 2)
+    qPush(q, 3)
+
+    expect(qLen(q)).toBe(3)
+
+    expect(qPop(q)).toBe(1)
+    expect(qPop(q)).toBe(2)
+    expect(qPop(q)).toBe(3)
+
+    expect(qLen(q)).toBe(0)
   })
 
-  it('detects the zero grid', () => {
-    expect(locIsZero(loc(0, 0))).toBe(true)
-    expect(locIsZero(loc(1, 0))).toBe(false)
+  it('Wraps around and keeps FIFO order', () => {
+    const q = qNew(3)
+    qPush(q, 1)
+    qPush(q, 2)
+    qPush(q, 3)
+    expect(qPop(q)).toBe(1)
+    expect(qPop(q)).toBe(2)
+    qPush(q, 4)
+    expect(qLen(q)).toBe(2)
+    expect(qPop(q)).toBe(3)
+    expect(qPop(q)).toBe(4)
+    expect(qLen(q)).toBe(0)
   })
 
-  it('sums and diffs without mutating inputs', () => {
-    const a = loc(4, 5)
-    const b = loc(1, 2)
+  it('throws on push beyond size', () => {
+    const q = qNew(3)
+    qPush(q, 1)
+    qPush(q, 2)
+    qPush(q, 3)
 
-    expect(locSum(a, b)).toEqual({ x: 5, y: 7 })
-    expect(locDiff(a, b)).toEqual({ x: 3, y: 3 })
-    expect(a).toEqual({ x: 4, y: 5 })
-    expect(b).toEqual({ x: 1, y: 2 })
+    expect(() => qPush(q, 4)).toThrow('queue overflow')
   })
 
-  it('offsets by dx/dy', () => {
-    expect(locOffset(loc(10, 20), -3, 4)).toEqual({ x: 7, y: 24 })
+  it('throws on pop from empty queue', () => {
+    const q = qNew(3)
+
+    expect(() => qPop(q)).toThrow('queue underflow')
   })
 })

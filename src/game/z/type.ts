@@ -1,4 +1,4 @@
-/** Grid coordinate. Always create a new Loc via helpers — do not mutate fields. */
+/** Port of src/z-type.c grid coordinate. Always create a new Loc via helpers — do not mutate fields. */
 
 export type Loc = Readonly<{ x: number; y: number }>
 

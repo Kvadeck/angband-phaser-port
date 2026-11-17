@@ -1,16 +1,48 @@
-/** Grid coordinate. Always create a new Loc via helpers — do not mutate fields. */
+/** Port of src/z-queue.c Circular integer queue **/
 
-export type Loc = Readonly<{ x: number; y: number }>
+export type Queue = {
+  data: number[]
+  size: number
+  head: number
+  tail: number
+}
 
-export const loc = (x: number, y: number): Loc => ({ x, y })
+export const qNew = (size:number): Queue => {
+  
+  const arr = new Array<number>(size + 1);
 
-export const locEq = (a: Loc, b: Loc): boolean => a.x === b.x && a.y === b.y
+  return {
+    data: arr,
+    size: size + 1,
+    head: 0,
+    tail: 0,
+  };
+}
 
-export const locIsZero = (grid: Loc): boolean => locEq(grid, loc(0, 0))
+export const qLen = (q: Queue): number => {
+  if (q.tail >= q.head) {
+    return q.tail - q.head;
+  }
+  return q.size - q.head + q.tail;
+}
 
-export const locSum = (a: Loc, b: Loc): Loc => loc(a.x + b.x, a.y + b.y)
+export const qPush = (q: Queue, item:number):void => {
+  q.data[q.tail] = item;
+  q.tail = (q.tail + 1) % q.size;
 
-export const locDiff = (a: Loc, b: Loc): Loc => loc(a.x - b.x, a.y - b.y)
+  if (q.tail === q.head) {
+    throw new Error('queue overflow');
+  }
+}
 
-export const locOffset = (grid: Loc, dx: number, dy: number): Loc =>
-  loc(grid.x + dx, grid.y + dy)
+export const qPop = (q: Queue):number | undefined => {
+  const item = q.data[q.head]
+
+  if (q.head === q.tail) {
+    throw new Error('queue underflow');
+  }
+
+  q.head = (q.head + 1) % q.size
+  return item
+}
+

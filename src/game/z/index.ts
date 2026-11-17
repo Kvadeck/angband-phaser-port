@@ -12,4 +12,16 @@ export {
   type Loc,
 } from './type'
 
+export {
+  qNew,
+  qLen,
+  qPush,
+  qPop,
+  type Queue,
+} from './queue'
+
+export {
+  lcrng
+} from './rand'
+
 export const GAME_CORE_READY = false
