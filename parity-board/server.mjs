@@ -1,5 +1,6 @@
 import http from 'node:http'
 import fs from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -9,6 +10,38 @@ const PARITY_PATH = path.join(ROOT, 'parity.json')
 const DIST_DIR = path.join(__dirname, 'dist')
 const PORT = Number(process.env.PORT || 3080)
 const HOST = process.env.HOST || '0.0.0.0'
+const VITEST_UI_PORT = Number(process.env.VITEST_UI_PORT || 51204)
+const VITEST_UI_PATH = process.env.VITEST_UI_PATH || '/__vitest__/'
+
+const vitestTokenPaths = () => {
+  const xdg = process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share')
+  return [
+    process.env.VITEST_UI_TOKEN_FILE,
+    path.join(xdg, 'vitest', '.vitest-secret-token'),
+    path.join(ROOT, 'node_modules', '.vitest', '.vitest-secret-token'),
+  ].filter(Boolean)
+}
+
+const readVitestToken = async () => {
+  if (process.env.VITEST_UI_TOKEN) return process.env.VITEST_UI_TOKEN
+  for (const tokenPath of vitestTokenPaths()) {
+    try {
+      const raw = await fs.readFile(tokenPath, 'utf8')
+      const token = raw.trim()
+      if (token) return token
+    } catch {
+      // try next
+    }
+  }
+  return ''
+}
+
+const buildVitestUiUrl = async (hostname) => {
+  const url = new URL(`http://${hostname}:${VITEST_UI_PORT}${VITEST_UI_PATH}`)
+  const token = await readVitestToken()
+  if (token) url.searchParams.set('token', token)
+  return url.toString()
+}
 
 const ALLOWED_SOURCE_PREFIXES = [
   path.join(ROOT, 'vendor', 'angband', 'src') + path.sep,
@@ -136,6 +169,48 @@ const server = http.createServer(async (req, res) => {
         error: err instanceof Error ? err.message : 'Failed to write parity.json',
       })
     }
+    return
+  }
+
+  if (url.pathname === '/api/tests' && req.method === 'GET') {
+    const hostHeader = req.headers.host || `127.0.0.1:${PORT}`
+    const hostname = hostHeader.split(':')[0] || '127.0.0.1'
+    const uiUrl = await buildVitestUiUrl(hostname)
+
+    const online = await new Promise((resolve) => {
+      const req = http.get(
+        {
+          host: '127.0.0.1',
+          port: VITEST_UI_PORT,
+          path: '/',
+          timeout: 1500,
+        },
+        (probeRes) => {
+          probeRes.resume()
+          resolve(true)
+        },
+      )
+      req.on('timeout', () => {
+        req.destroy()
+        resolve(false)
+      })
+      req.on('error', () => resolve(false))
+    })
+
+    sendJson(res, 200, {
+      online,
+      port: VITEST_UI_PORT,
+      path: VITEST_UI_PATH,
+      url: uiUrl,
+    })
+    return
+  }
+
+  if (url.pathname === '/tests' || url.pathname === '/tests/') {
+    const hostHeader = req.headers.host || `127.0.0.1:${PORT}`
+    const hostname = hostHeader.split(':')[0] || '127.0.0.1'
+    res.writeHead(302, { Location: await buildVitestUiUrl(hostname) })
+    res.end()
     return
   }
 

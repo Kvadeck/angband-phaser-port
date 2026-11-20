@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui --api.host 0.0.0.0 --api.port 51204",
+    "test:ui": "vitest --ui --watch --api.host 0.0.0.0 --api.port 51204 --api.allowExec --api.allowWrite",
     "typecheck": "vue-tsc -b --pretty false"
   },
   "dependencies": {

@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
@@ -7,6 +8,26 @@ import tailwindcss from '@tailwindcss/vite'
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const parityPath = path.join(rootDir, 'parity.json')
+
+const readVitestToken = async () => {
+  if (process.env.VITEST_UI_TOKEN) return process.env.VITEST_UI_TOKEN
+  const xdg = process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share')
+  const paths = [
+    process.env.VITEST_UI_TOKEN_FILE,
+    path.join(xdg, 'vitest', '.vitest-secret-token'),
+    path.join(rootDir, 'node_modules', '.vitest', '.vitest-secret-token'),
+  ].filter(Boolean) as string[]
+
+  for (const tokenPath of paths) {
+    try {
+      const token = (await fs.readFile(tokenPath, 'utf8')).trim()
+      if (token) return token
+    } catch {
+      // try next
+    }
+  }
+  return ''
+}
 
 const allowedSourcePrefixes = [
   path.join(rootDir, 'vendor', 'angband', 'src') + path.sep,
@@ -76,6 +97,39 @@ const parityApiPlugin = (): Plugin => ({
 
         res.statusCode = 405
         res.end('Method not allowed')
+        return
+      }
+
+      if (url.pathname === '/api/tests' && req.method === 'GET') {
+        const vitestPort = Number(process.env.VITEST_UI_PORT || 51204)
+        const vitestPath = process.env.VITEST_UI_PATH || '/__vitest__/'
+        const hostHeader = req.headers.host || 'localhost'
+        const hostname = hostHeader.split(':')[0] || 'localhost'
+        const token = await readVitestToken()
+        const uiUrl = new URL(`http://${hostname}:${vitestPort}${vitestPath}`)
+        if (token) uiUrl.searchParams.set('token', token)
+
+        let online = false
+        try {
+          const probe = await fetch(uiUrl.toString().replace(hostname, '127.0.0.1'), {
+            method: 'GET',
+            signal: AbortSignal.timeout(1500),
+          })
+          online = probe.ok || probe.status === 304
+        } catch {
+          online = false
+        }
+
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.setHeader('Cache-Control', 'no-store')
+        res.end(
+          JSON.stringify({
+            online,
+            port: vitestPort,
+            path: vitestPath,
+            url: uiUrl.toString(),
+          }),
+        )
         return
       }
 

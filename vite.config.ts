@@ -12,5 +12,13 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.{test,spec}.ts'],
+    // Vitest UI is bound on 0.0.0.0 for the parity board link — allow run/rerun from UI.
+    api: {
+      host: '0.0.0.0',
+      port: 51204,
+      strictPort: true,
+      allowExec: true,
+      allowWrite: true,
+    },
   },
 })

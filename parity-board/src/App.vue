@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import type { ParityModule, ParityStatus } from './types'
 import { useParity } from './composables/useParity'
 import ModuleDualView from './components/ModuleDualView.vue'
@@ -28,6 +28,24 @@ const {
   removeFunction,
   functionProgress,
 } = useParity()
+
+type TestsStatus = {
+  online: boolean
+  url: string
+}
+
+const testsStatus = ref<TestsStatus | null>(null)
+let testsPollTimer: ReturnType<typeof setInterval> | null = null
+
+const loadTestsStatus = async () => {
+  try {
+    const response = await fetch('/api/tests')
+    if (!response.ok) return
+    testsStatus.value = (await response.json()) as TestsStatus
+  } catch {
+    testsStatus.value = { online: false, url: '/tests' }
+  }
+}
 
 const statusClass = (status: ParityStatus) => {
   if (status === 'parity') {
@@ -73,6 +91,14 @@ const progressLabel = (module: ParityModule) => {
 
 onMounted(() => {
   void loadParity()
+  void loadTestsStatus()
+  testsPollTimer = setInterval(() => {
+    void loadTestsStatus()
+  }, 10000)
+})
+
+onUnmounted(() => {
+  if (testsPollTimer) clearInterval(testsPollTimer)
 })
 </script>
 
@@ -97,6 +123,19 @@ onMounted(() => {
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
+        <a
+          class="inline-flex items-center gap-2 rounded border border-[var(--line)] bg-white/70 px-3 py-2 text-sm transition hover:bg-white"
+          :href="testsStatus?.url || '/tests'"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open Vitest UI"
+        >
+          <span
+            class="size-2 rounded-full"
+            :class="testsStatus?.online ? 'bg-[var(--parity)]' : 'bg-[var(--stub)]'"
+          />
+          Tests
+        </a>
         <button
           type="button"
           class="rounded border border-[var(--line)] bg-white/70 px-3 py-2 text-sm transition hover:bg-white"
