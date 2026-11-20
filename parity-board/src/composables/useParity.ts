@@ -1,7 +1,14 @@
 import { computed, ref } from 'vue'
-import type { ParityData, ParityStatus } from '../types'
+import type { ParityData, ParityFunction, ParityModule, ParityStatus } from '../types'
 
 const STATUS_ORDER: ParityStatus[] = ['stub', 'partial', 'parity']
+
+const slugify = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, '_')
+    .replace(/^_+|_+$/g, '')
 
 export const useParity = () => {
   const data = ref<ParityData | null>(null)
@@ -10,10 +17,25 @@ export const useParity = () => {
   const saving = ref(false)
   const error = ref('')
   const saveMessage = ref('')
+  const selectedModuleId = ref<string | null>(null)
 
   const filterStatus = ref<ParityStatus | 'all'>('all')
   const filterMilestone = ref<string>('all')
   const filterHasNotes = ref(false)
+
+  const findModule = (moduleId: string): ParityModule | null => {
+    if (!data.value) return null
+    for (const milestone of data.value.milestones) {
+      const module = milestone.modules.find((item) => item.id === moduleId)
+      if (module) return module
+    }
+    return null
+  }
+
+  const selectedModule = computed(() => {
+    if (!selectedModuleId.value) return null
+    return findModule(selectedModuleId.value)
+  })
 
   const totals = computed(() => {
     if (!data.value) {
@@ -66,6 +88,11 @@ export const useParity = () => {
       .filter((milestone) => milestone.modules.length > 0)
   })
 
+  const markDirty = () => {
+    dirty.value = true
+    saveMessage.value = ''
+  }
+
   const loadParity = async () => {
     loading.value = true
     error.value = ''
@@ -113,31 +140,82 @@ export const useParity = () => {
   }
 
   const cycleStatus = (moduleId: string) => {
-    if (!data.value) return
+    const module = findModule(moduleId)
+    if (!module) return
 
-    for (const milestone of data.value.milestones) {
-      const module = milestone.modules.find((item) => item.id === moduleId)
-      if (!module) continue
-
-      const index = STATUS_ORDER.indexOf(module.status)
-      module.status = STATUS_ORDER[(index + 1) % STATUS_ORDER.length]
-      dirty.value = true
-      saveMessage.value = ''
-      return
-    }
+    const index = STATUS_ORDER.indexOf(module.status)
+    module.status = STATUS_ORDER[(index + 1) % STATUS_ORDER.length]
+    markDirty()
   }
 
   const handleNotesInput = (moduleId: string, notes: string) => {
-    if (!data.value) return
+    const module = findModule(moduleId)
+    if (!module) return
+    module.notes = notes
+    markDirty()
+  }
 
-    for (const milestone of data.value.milestones) {
-      const module = milestone.modules.find((item) => item.id === moduleId)
-      if (!module) continue
-      module.notes = notes
-      dirty.value = true
-      saveMessage.value = ''
-      return
+  const openModule = (moduleId: string) => {
+    selectedModuleId.value = moduleId
+  }
+
+  const closeModule = () => {
+    selectedModuleId.value = null
+  }
+
+  const ensureFunctions = (module: ParityModule) => {
+    if (!module.functions) {
+      module.functions = []
     }
+    return module.functions
+  }
+
+  const toggleFunctionDone = (moduleId: string, functionId: string) => {
+    const module = findModule(moduleId)
+    if (!module?.functions) return
+    const fn = module.functions.find((item) => item.id === functionId)
+    if (!fn) return
+    fn.done = !fn.done
+    markDirty()
+  }
+
+  const addFunction = (moduleId: string, cName: string, tsName: string) => {
+    const module = findModule(moduleId)
+    if (!module) return false
+
+    const c = cName.trim()
+    const ts = tsName.trim()
+    if (!c || !ts) return false
+
+    const functions = ensureFunctions(module)
+    const baseId = slugify(c) || `fn_${functions.length + 1}`
+    let id = baseId
+    let suffix = 2
+    while (functions.some((item) => item.id === id)) {
+      id = `${baseId}_${suffix}`
+      suffix += 1
+    }
+
+    const entry: ParityFunction = { id, c, ts, done: false }
+    functions.push(entry)
+    markDirty()
+    return true
+  }
+
+  const removeFunction = (moduleId: string, functionId: string) => {
+    const module = findModule(moduleId)
+    if (!module?.functions) return
+    const index = module.functions.findIndex((item) => item.id === functionId)
+    if (index < 0) return
+    module.functions.splice(index, 1)
+    markDirty()
+  }
+
+  const functionProgress = (module: ParityModule) => {
+    const functions = module.functions ?? []
+    if (functions.length === 0) return null
+    const done = functions.filter((item) => item.done).length
+    return { done, total: functions.length }
   }
 
   return {
@@ -147,6 +225,8 @@ export const useParity = () => {
     saving,
     error,
     saveMessage,
+    selectedModuleId,
+    selectedModule,
     filterStatus,
     filterMilestone,
     filterHasNotes,
@@ -156,5 +236,11 @@ export const useParity = () => {
     saveParity,
     cycleStatus,
     handleNotesInput,
+    openModule,
+    closeModule,
+    toggleFunctionDone,
+    addFunction,
+    removeFunction,
+    functionProgress,
   }
 }

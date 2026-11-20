@@ -1,11 +1,19 @@
 export type ParityStatus = 'stub' | 'partial' | 'parity'
 
+export type ParityFunction = {
+  id: string
+  c: string
+  ts: string
+  done: boolean
+}
+
 export type ParityModule = {
   id: string
   upstream: string
   typescript: string
   status: ParityStatus
   notes: string
+  functions?: ParityFunction[]
 }
 
 export type ParityMilestone = {

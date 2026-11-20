@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import type { ParityStatus } from './types'
+import { onMounted, onUnmounted, ref } from 'vue'
+import type { ParityModule, ParityStatus } from './types'
 import { useParity } from './composables/useParity'
+import ModuleDualView from './components/ModuleDualView.vue'
 
 const {
   data,
@@ -10,6 +11,7 @@ const {
   saving,
   error,
   saveMessage,
+  selectedModule,
   filterStatus,
   filterMilestone,
   filterHasNotes,
@@ -19,7 +21,31 @@ const {
   saveParity,
   cycleStatus,
   handleNotesInput,
+  openModule,
+  closeModule,
+  toggleFunctionDone,
+  addFunction,
+  removeFunction,
+  functionProgress,
 } = useParity()
+
+type TestsStatus = {
+  online: boolean
+  url: string
+}
+
+const testsStatus = ref<TestsStatus | null>(null)
+let testsPollTimer: ReturnType<typeof setInterval> | null = null
+
+const loadTestsStatus = async () => {
+  try {
+    const response = await fetch('/api/tests')
+    if (!response.ok) return
+    testsStatus.value = (await response.json()) as TestsStatus
+  } catch {
+    testsStatus.value = { online: false, url: '/tests' }
+  }
+}
 
 const statusClass = (status: ParityStatus) => {
   if (status === 'parity') {
@@ -49,13 +75,38 @@ const handleNotesChange = (moduleId: string, event: Event) => {
   handleNotesInput(moduleId, target.value)
 }
 
+const handleRowClick = (moduleId: string) => {
+  openModule(moduleId)
+}
+
+const handleStop = (event: Event) => {
+  event.stopPropagation()
+}
+
+const progressLabel = (module: ParityModule) => {
+  const progress = functionProgress(module)
+  if (!progress) return ''
+  return `${progress.done}/${progress.total}`
+}
+
 onMounted(() => {
   void loadParity()
+  void loadTestsStatus()
+  testsPollTimer = setInterval(() => {
+    void loadTestsStatus()
+  }, 10000)
+})
+
+onUnmounted(() => {
+  if (testsPollTimer) clearInterval(testsPollTimer)
 })
 </script>
 
 <template>
-  <div class="mx-auto min-h-screen max-w-6xl px-4 py-8 sm:px-6">
+  <div
+    class="mx-auto min-h-screen px-4 py-8 sm:px-6"
+    :class="selectedModule ? 'max-w-7xl' : 'max-w-6xl'"
+  >
     <header class="mb-8 flex flex-col gap-4 border-b border-[var(--line)] pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p class="mb-1 font-mono text-xs tracking-[0.18em] text-[var(--mute)] uppercase">
@@ -72,6 +123,19 @@ onMounted(() => {
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
+        <a
+          class="inline-flex items-center gap-2 rounded border border-[var(--line)] bg-white/70 px-3 py-2 text-sm transition hover:bg-white"
+          :href="testsStatus?.url || '/tests'"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open Vitest UI"
+        >
+          <span
+            class="size-2 rounded-full"
+            :class="testsStatus?.online ? 'bg-[var(--parity)]' : 'bg-[var(--stub)]'"
+          />
+          Tests
+        </a>
         <button
           type="button"
           class="rounded border border-[var(--line)] bg-white/70 px-3 py-2 text-sm transition hover:bg-white"
@@ -91,72 +155,6 @@ onMounted(() => {
       </div>
     </header>
 
-    <section
-      v-if="data"
-      class="mb-6 grid gap-3 sm:grid-cols-[1.2fr_1fr]"
-    >
-      <div class="rounded border border-[var(--line)] bg-white/50 p-4">
-        <div class="mb-2 flex items-baseline justify-between gap-3">
-          <p class="text-sm text-[var(--mute)]">Progress (partial + parity)</p>
-          <p class="font-mono text-sm">
-            {{ totals.done }}/{{ totals.total }}
-          </p>
-        </div>
-        <div class="h-2 overflow-hidden rounded bg-[var(--paper-2)]">
-          <div
-            class="h-full bg-[var(--accent)] transition-all"
-            :style="{ width: totals.total ? `${(totals.done / totals.total) * 100}%` : '0%' }"
-          />
-        </div>
-        <div class="mt-3 flex flex-wrap gap-3 font-mono text-xs text-[var(--mute)]">
-          <span>stub {{ totals.stub }}</span>
-          <span>partial {{ totals.partial }}</span>
-          <span>parity {{ totals.parity }}</span>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap items-end gap-3 rounded border border-[var(--line)] bg-white/50 p-4">
-        <label class="flex min-w-28 flex-1 flex-col gap-1 text-xs text-[var(--mute)]">
-          Status
-          <select
-            v-model="filterStatus"
-            class="rounded border border-[var(--line)] bg-white px-2 py-2 text-sm text-[var(--ink)]"
-          >
-            <option value="all">all</option>
-            <option value="stub">stub</option>
-            <option value="partial">partial</option>
-            <option value="parity">parity</option>
-          </select>
-        </label>
-
-        <label class="flex min-w-40 flex-1 flex-col gap-1 text-xs text-[var(--mute)]">
-          Milestone
-          <select
-            v-model="filterMilestone"
-            class="rounded border border-[var(--line)] bg-white px-2 py-2 text-sm text-[var(--ink)]"
-          >
-            <option value="all">all</option>
-            <option
-              v-for="milestone in data.milestones"
-              :key="milestone.id"
-              :value="milestone.id"
-            >
-              {{ milestone.title }}
-            </option>
-          </select>
-        </label>
-
-        <label class="flex items-center gap-2 pb-2 text-sm text-[var(--ink)]">
-          <input
-            v-model="filterHasNotes"
-            type="checkbox"
-            class="size-4 accent-[var(--accent)]"
-          />
-          has notes
-        </label>
-      </div>
-    </section>
-
     <p v-if="loading" class="text-sm text-[var(--mute)]">Loading parity.json…</p>
     <p v-else-if="error" class="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
       {{ error }}
@@ -174,7 +172,81 @@ onMounted(() => {
       Unsaved changes
     </p>
 
-    <template v-if="data && !loading">
+    <ModuleDualView
+      v-if="selectedModule && !loading"
+      :module="selectedModule"
+      @back="closeModule"
+      @cycle-status="handleCycleStatus"
+      @notes-input="handleNotesInput"
+      @toggle-function="toggleFunctionDone"
+      @add-function="addFunction"
+      @remove-function="removeFunction"
+    />
+
+    <template v-else-if="data && !loading">
+      <section class="mb-6 grid gap-3 sm:grid-cols-[1.2fr_1fr]">
+        <div class="rounded border border-[var(--line)] bg-white/50 p-4">
+          <div class="mb-2 flex items-baseline justify-between gap-3">
+            <p class="text-sm text-[var(--mute)]">Progress (partial + parity)</p>
+            <p class="font-mono text-sm">
+              {{ totals.done }}/{{ totals.total }}
+            </p>
+          </div>
+          <div class="h-2 overflow-hidden rounded bg-[var(--paper-2)]">
+            <div
+              class="h-full bg-[var(--accent)] transition-all"
+              :style="{ width: totals.total ? `${(totals.done / totals.total) * 100}%` : '0%' }"
+            />
+          </div>
+          <div class="mt-3 flex flex-wrap gap-3 font-mono text-xs text-[var(--mute)]">
+            <span>stub {{ totals.stub }}</span>
+            <span>partial {{ totals.partial }}</span>
+            <span>parity {{ totals.parity }}</span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-end gap-3 rounded border border-[var(--line)] bg-white/50 p-4">
+          <label class="flex min-w-28 flex-1 flex-col gap-1 text-xs text-[var(--mute)]">
+            Status
+            <select
+              v-model="filterStatus"
+              class="rounded border border-[var(--line)] bg-white px-2 py-2 text-sm text-[var(--ink)]"
+            >
+              <option value="all">all</option>
+              <option value="stub">stub</option>
+              <option value="partial">partial</option>
+              <option value="parity">parity</option>
+            </select>
+          </label>
+
+          <label class="flex min-w-40 flex-1 flex-col gap-1 text-xs text-[var(--mute)]">
+            Milestone
+            <select
+              v-model="filterMilestone"
+              class="rounded border border-[var(--line)] bg-white px-2 py-2 text-sm text-[var(--ink)]"
+            >
+              <option value="all">all</option>
+              <option
+                v-for="milestone in data.milestones"
+                :key="milestone.id"
+                :value="milestone.id"
+              >
+                {{ milestone.title }}
+              </option>
+            </select>
+          </label>
+
+          <label class="flex items-center gap-2 pb-2 text-sm text-[var(--ink)]">
+            <input
+              v-model="filterHasNotes"
+              type="checkbox"
+              class="size-4 accent-[var(--accent)]"
+            />
+            has notes
+          </label>
+        </div>
+      </section>
+
       <section
         v-for="milestone in visibleMilestones"
         :key="milestone.id"
@@ -191,6 +263,7 @@ onMounted(() => {
                 <th class="px-3 py-2 font-medium">Upstream (C)</th>
                 <th class="px-3 py-2 font-medium">TypeScript</th>
                 <th class="px-3 py-2 font-medium">Status</th>
+                <th class="px-3 py-2 font-medium">Fn</th>
                 <th class="min-w-64 px-3 py-2 font-medium">Notes</th>
               </tr>
             </thead>
@@ -198,7 +271,9 @@ onMounted(() => {
               <tr
                 v-for="module in milestone.modules"
                 :key="module.id"
-                class="border-t border-[var(--line)] align-top"
+                class="cursor-pointer border-t border-[var(--line)] align-top transition hover:bg-[var(--accent-soft)]/40"
+                title="Open C ↔ TS dual view"
+                @click="handleRowClick(module.id)"
               >
                 <td class="px-3 py-3 font-mono text-xs sm:text-sm">
                   {{ module.upstream }}
@@ -206,7 +281,7 @@ onMounted(() => {
                 <td class="px-3 py-3 font-mono text-xs sm:text-sm">
                   {{ module.typescript }}
                 </td>
-                <td class="px-3 py-3">
+                <td class="px-3 py-3" @click="handleStop">
                   <button
                     type="button"
                     class="rounded px-2.5 py-1 font-mono text-xs ring-1 transition hover:brightness-95"
@@ -217,7 +292,10 @@ onMounted(() => {
                     {{ module.status }}
                   </button>
                 </td>
-                <td class="px-3 py-3">
+                <td class="px-3 py-3 font-mono text-xs text-[var(--mute)]">
+                  {{ progressLabel(module) || '—' }}
+                </td>
+                <td class="px-3 py-3" @click="handleStop">
                   <textarea
                     :value="module.notes"
                     rows="2"
