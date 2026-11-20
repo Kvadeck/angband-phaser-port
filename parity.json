@@ -1,0 +1,203 @@
+{
+  "upstreamPin": {
+    "path": "vendor/angband",
+    "tag": "4.2.5",
+    "commit": "69e24dbb0"
+  },
+  "statuses": [
+    "stub",
+    "partial",
+    "parity"
+  ],
+  "milestones": [
+    {
+      "id": "m1",
+      "title": "Milestone 1 — Dungeon loop",
+      "started": true,
+      "modules": [
+        {
+          "id": "z-type",
+          "upstream": "src/z-type.h / src/z-type.c",
+          "typescript": "src/game/z/type.ts",
+          "status": "partial",
+          "notes": "Loc + helpers (locEq, locSum, …); no randLoc (needs z-rand), no point_set / grouper yet; camelCase; Loc is readonly, always create new object."
+        },
+        {
+          "id": "z-rand",
+          "upstream": "src/z-rand.h / src/z-rand.c",
+          "typescript": "src/game/z/",
+          "status": "stub",
+          "notes": "RNG for gen/combat"
+        },
+        {
+          "id": "z-queue",
+          "upstream": "src/z-queue.h / src/z-queue.c",
+          "typescript": "src/game/z/queue.ts",
+          "status": "partial",
+          "notes": "integer-only (number); no q_push_ptr / q_pop_ptr; no q_free (GC); overflow/underflow → throw (C: abort)"
+        },
+        {
+          "id": "cave",
+          "upstream": "src/cave.h / src/cave.c",
+          "typescript": "src/game/cave/",
+          "status": "stub",
+          "notes": "chunk, square, feats"
+        },
+        {
+          "id": "cave-square",
+          "upstream": "src/cave-square.c",
+          "typescript": "src/game/cave/",
+          "status": "stub",
+          "notes": "square predicates / accessors"
+        },
+        {
+          "id": "cave-view",
+          "upstream": "src/cave-view.c",
+          "typescript": "src/game/cave/",
+          "status": "stub",
+          "notes": "update_view / LOS"
+        },
+        {
+          "id": "cave-map",
+          "upstream": "src/cave-map.c",
+          "typescript": "src/game/cave/",
+          "status": "stub",
+          "notes": "map_info, noise/scent (simplified OK at first)"
+        },
+        {
+          "id": "generate",
+          "upstream": "src/generate.c / src/generate.h",
+          "typescript": "src/game/generate/",
+          "status": "stub",
+          "notes": "level orchestration"
+        },
+        {
+          "id": "gen-cave",
+          "upstream": "src/gen-cave.c",
+          "typescript": "src/game/generate/",
+          "status": "stub",
+          "notes": "classic-like rooms + corridors"
+        },
+        {
+          "id": "gen-room",
+          "upstream": "src/gen-room.c",
+          "typescript": "src/game/generate/",
+          "status": "stub",
+          "notes": "simple rooms first"
+        },
+        {
+          "id": "gen-util",
+          "upstream": "src/gen-util.c",
+          "typescript": "src/game/generate/",
+          "status": "stub",
+          "notes": "helpers"
+        },
+        {
+          "id": "cmd-core",
+          "upstream": "src/cmd-core.c",
+          "typescript": "src/game/cmd/",
+          "status": "stub",
+          "notes": "command queue"
+        },
+        {
+          "id": "cmd-cave",
+          "upstream": "src/cmd-cave.c",
+          "typescript": "src/game/cmd/",
+          "status": "stub",
+          "notes": "move / descend"
+        },
+        {
+          "id": "game-world",
+          "upstream": "src/game-world.c",
+          "typescript": "src/game/world/",
+          "status": "stub",
+          "notes": "energy runGameLoop"
+        },
+        {
+          "id": "game-event",
+          "upstream": "src/game-event.c",
+          "typescript": "src/game/event/",
+          "status": "stub",
+          "notes": "UI/renderer notifications"
+        },
+        {
+          "id": "player",
+          "upstream": "src/player.h / src/player.c",
+          "typescript": "src/game/player/",
+          "status": "stub",
+          "notes": "minimal player for M1 (no full birth)"
+        },
+        {
+          "id": "player-attack",
+          "upstream": "src/player-attack.c",
+          "typescript": "src/game/player/",
+          "status": "stub",
+          "notes": "melee vs monsters"
+        },
+        {
+          "id": "player-calcs",
+          "upstream": "src/player-calcs.c",
+          "typescript": "src/game/player/",
+          "status": "stub",
+          "notes": "only what M1 needs (handle_stuff / vision flags)"
+        },
+        {
+          "id": "mon-make",
+          "upstream": "src/mon-make.c",
+          "typescript": "src/game/mon/",
+          "status": "stub",
+          "notes": "place 1–2 monster kinds"
+        },
+        {
+          "id": "mon-move",
+          "upstream": "src/mon-move.c",
+          "typescript": "src/game/mon/",
+          "status": "stub",
+          "notes": "approach player"
+        },
+        {
+          "id": "mon-attack",
+          "upstream": "src/mon-attack.c",
+          "typescript": "src/game/mon/",
+          "status": "stub",
+          "notes": "monster melee"
+        }
+      ]
+    },
+    {
+      "id": "m2",
+      "title": "Milestone 2+ (not started)",
+      "started": false,
+      "modules": [
+        {
+          "id": "player-birth",
+          "upstream": "src/player-birth.c",
+          "typescript": "src/game/player/",
+          "status": "stub",
+          "notes": "character creation + Vue wizard"
+        },
+        {
+          "id": "town-stores",
+          "upstream": "town / stores / inventory",
+          "typescript": "TBD",
+          "status": "stub",
+          "notes": "after dungeon loop"
+        },
+        {
+          "id": "gamedata",
+          "upstream": "lib/gamedata/*.txt",
+          "typescript": "TBD",
+          "status": "stub",
+          "notes": "colon-file parser"
+        },
+        {
+          "id": "tileset-renderer",
+          "upstream": "tileset renderer",
+          "typescript": "src/render/phaser/",
+          "status": "stub",
+          "notes": "after ASCII map"
+        }
+      ]
+    }
+  ]
+}
