@@ -1,0 +1,131 @@
+import http from 'node:http'
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const ROOT = path.resolve(__dirname, '..')
+const PARITY_PATH = path.join(ROOT, 'parity.json')
+const DIST_DIR = path.join(__dirname, 'dist')
+const PORT = Number(process.env.PORT || 3080)
+const HOST = process.env.HOST || '0.0.0.0'
+
+const CONTENT_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+}
+
+const sendJson = (res, status, body) => {
+  const payload = JSON.stringify(body)
+  res.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store',
+  })
+  res.end(payload)
+}
+
+const readBody = (req) =>
+  new Promise((resolve, reject) => {
+    const chunks = []
+    req.on('data', (chunk) => chunks.push(chunk))
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
+    req.on('error', reject)
+  })
+
+const isValidParity = (value) => {
+  if (!value || typeof value !== 'object') return false
+  if (!Array.isArray(value.milestones)) return false
+  return true
+}
+
+const serveStatic = async (req, res) => {
+  const url = new URL(req.url || '/', `http://${req.headers.host}`)
+  let pathname = decodeURIComponent(url.pathname)
+  if (pathname === '/') pathname = '/index.html'
+
+  const filePath = path.normalize(path.join(DIST_DIR, pathname))
+  if (!filePath.startsWith(DIST_DIR)) {
+    res.writeHead(403).end('Forbidden')
+    return
+  }
+
+  try {
+    const data = await fs.readFile(filePath)
+    const ext = path.extname(filePath)
+    res.writeHead(200, {
+      'Content-Type': CONTENT_TYPES[ext] || 'application/octet-stream',
+    })
+    res.end(data)
+  } catch {
+    if (pathname !== '/index.html') {
+      try {
+        const fallback = await fs.readFile(path.join(DIST_DIR, 'index.html'))
+        res.writeHead(200, { 'Content-Type': CONTENT_TYPES['.html'] })
+        res.end(fallback)
+        return
+      } catch {
+        // fall through
+      }
+    }
+    res.writeHead(404).end('Not found')
+  }
+}
+
+const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url || '/', `http://${req.headers.host}`)
+
+  if (url.pathname === '/api/parity' && req.method === 'GET') {
+    try {
+      const raw = await fs.readFile(PARITY_PATH, 'utf8')
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store',
+      })
+      res.end(raw)
+    } catch (err) {
+      sendJson(res, 500, {
+        error: err instanceof Error ? err.message : 'Failed to read parity.json',
+      })
+    }
+    return
+  }
+
+  if (url.pathname === '/api/parity' && req.method === 'PUT') {
+    try {
+      const body = await readBody(req)
+      const parsed = JSON.parse(body)
+      if (!isValidParity(parsed)) {
+        sendJson(res, 400, { error: 'Invalid parity payload' })
+        return
+      }
+      const formatted = `${JSON.stringify(parsed, null, 2)}\n`
+      await fs.writeFile(PARITY_PATH, formatted, 'utf8')
+      sendJson(res, 200, { ok: true })
+    } catch (err) {
+      sendJson(res, 500, {
+        error: err instanceof Error ? err.message : 'Failed to write parity.json',
+      })
+    }
+    return
+  }
+
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    await serveStatic(req, res)
+    return
+  }
+
+  res.writeHead(405).end('Method not allowed')
+})
+
+server.listen(PORT, HOST, () => {
+  console.log(`Parity Board listening on http://${HOST}:${PORT}`)
+  console.log(`Serving ${DIST_DIR}`)
+  console.log(`Editing ${PARITY_PATH}`)
+})
