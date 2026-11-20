@@ -20,7 +20,21 @@
           "upstream": "src/z-type.h / src/z-type.c",
           "typescript": "src/game/z/type.ts",
           "status": "partial",
-          "notes": "Loc + helpers (locEq, locSum, …); no randLoc (needs z-rand), no point_set / grouper yet; camelCase; Loc is readonly, always create new object."
+          "notes": "Loc + helpers (locEq, locSum, …); no randLoc (needs z-rand), no point_set / grouper yet; camelCase; Loc is readonly, always create new object. Just for test.",
+          "functions": [
+            { "id": "loc", "c": "loc", "ts": "loc", "done": true },
+            { "id": "loc_eq", "c": "loc_eq", "ts": "locEq", "done": true },
+            { "id": "loc_is_zero", "c": "loc_is_zero", "ts": "locIsZero", "done": true },
+            { "id": "loc_sum", "c": "loc_sum", "ts": "locSum", "done": true },
+            { "id": "loc_diff", "c": "loc_diff", "ts": "locDiff", "done": true },
+            { "id": "rand_loc", "c": "rand_loc", "ts": "randLoc", "done": false },
+            { "id": "loc_offset", "c": "loc_offset", "ts": "locOffset", "done": true },
+            { "id": "point_set_new", "c": "point_set_new", "ts": "pointSetNew", "done": false },
+            { "id": "point_set_dispose", "c": "point_set_dispose", "ts": "pointSetDispose", "done": false },
+            { "id": "add_to_point_set", "c": "add_to_point_set", "ts": "addToPointSet", "done": false },
+            { "id": "point_set_size", "c": "point_set_size", "ts": "pointSetSize", "done": false },
+            { "id": "point_set_contains", "c": "point_set_contains", "ts": "pointSetContains", "done": false }
+          ]
         },
         {
           "id": "z-rand",

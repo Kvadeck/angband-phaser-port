@@ -10,6 +10,11 @@ const DIST_DIR = path.join(__dirname, 'dist')
 const PORT = Number(process.env.PORT || 3080)
 const HOST = process.env.HOST || '0.0.0.0'
 
+const ALLOWED_SOURCE_PREFIXES = [
+  path.join(ROOT, 'vendor', 'angband', 'src') + path.sep,
+  path.join(ROOT, 'src') + path.sep,
+]
+
 const CONTENT_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -20,6 +25,11 @@ const CONTENT_TYPES = {
   '.ico': 'image/x-icon',
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
+  '.c': 'text/plain; charset=utf-8',
+  '.h': 'text/plain; charset=utf-8',
+  '.ts': 'text/plain; charset=utf-8',
+  '.tsx': 'text/plain; charset=utf-8',
+  '.vue': 'text/plain; charset=utf-8',
 }
 
 const sendJson = (res, status, body) => {
@@ -43,6 +53,19 @@ const isValidParity = (value) => {
   if (!value || typeof value !== 'object') return false
   if (!Array.isArray(value.milestones)) return false
   return true
+}
+
+const resolveAllowedSource = (relativePath) => {
+  if (!relativePath || relativePath.includes('\0')) return null
+  const normalized = path.normalize(relativePath).replace(/^(\.\.(\/|\\|$))+/, '')
+  if (normalized.startsWith('..')) return null
+
+  const absolute = path.resolve(ROOT, normalized)
+  const allowed = ALLOWED_SOURCE_PREFIXES.some(
+    (prefix) => absolute === prefix.slice(0, -1) || absolute.startsWith(prefix),
+  )
+  if (!allowed) return null
+  return absolute
 }
 
 const serveStatic = async (req, res) => {
@@ -111,6 +134,28 @@ const server = http.createServer(async (req, res) => {
     } catch (err) {
       sendJson(res, 500, {
         error: err instanceof Error ? err.message : 'Failed to write parity.json',
+      })
+    }
+    return
+  }
+
+  if (url.pathname === '/api/source' && req.method === 'GET') {
+    const relative = url.searchParams.get('path') || ''
+    const absolute = resolveAllowedSource(relative)
+    if (!absolute) {
+      sendJson(res, 403, { error: 'Path not allowed' })
+      return
+    }
+
+    try {
+      const raw = await fs.readFile(absolute, 'utf8')
+      sendJson(res, 200, {
+        path: relative.replace(/\\/g, '/'),
+        content: raw,
+      })
+    } catch (err) {
+      sendJson(res, 404, {
+        error: err instanceof Error ? err.message : 'File not found',
       })
     }
     return

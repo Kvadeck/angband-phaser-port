@@ -20,8 +20,6 @@ export {
   type Queue,
 } from './queue'
 
-export {
-  lcrng
-} from './rand'
+// z-rand (lcrng, …) — export when src/game/z/rand.ts lands
 
 export const GAME_CORE_READY = false
