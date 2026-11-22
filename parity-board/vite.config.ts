@@ -161,4 +161,9 @@ const parityApiPlugin = (): Plugin => ({
 
 export default defineConfig({
   plugins: [vue(), tailwindcss(), parityApiPlugin()],
+  resolve: {
+    alias: {
+      '@game': path.join(rootDir, 'src', 'game'),
+    },
+  },
 })
