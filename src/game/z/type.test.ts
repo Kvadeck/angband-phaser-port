@@ -9,21 +9,21 @@ import {
 } from '@/game/z'
 
 describe('loc (port of z-type)', () => {
-  it('builds a coordinate pair', () => {
+  it('Builds a coordinate pair', () => {
     expect(loc(3, 7)).toEqual({ x: 3, y: 7 })
   })
 
-  it('compares equality', () => {
+  it('Compares equality', () => {
     expect(locEq(loc(1, 2), loc(1, 2))).toBe(true)
     expect(locEq(loc(1, 2), loc(2, 1))).toBe(false)
   })
 
-  it('detects the zero grid', () => {
+  it('Detects the zero grid', () => {
     expect(locIsZero(loc(0, 0))).toBe(true)
     expect(locIsZero(loc(1, 0))).toBe(false)
   })
 
-  it('sums and diffs without mutating inputs', () => {
+  it('Sums and diffs without mutating inputs', () => {
     const a = loc(4, 5)
     const b = loc(1, 2)
 
@@ -33,7 +33,7 @@ describe('loc (port of z-type)', () => {
     expect(b).toEqual({ x: 1, y: 2 })
   })
 
-  it('offsets by dx/dy', () => {
+  it('Offsets by dx/dy', () => {
     expect(locOffset(loc(10, 20), -3, 4)).toEqual({ x: 7, y: 24 })
   })
 })

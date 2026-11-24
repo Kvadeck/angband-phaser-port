@@ -31,7 +31,7 @@ export const qPush = (q: Queue, item:number):void => {
   q.tail = (q.tail + 1) % q.size;
 
   if (q.tail === q.head) {
-    throw new Error('queue overflow');
+    throw new Error('Queue overflow');
   }
 }
 
@@ -39,7 +39,7 @@ export const qPop = (q: Queue):number | undefined => {
   const item = q.data[q.head]
 
   if (q.head === q.tail) {
-    throw new Error('queue underflow');
+    throw new Error('Queue underflow');
   }
 
   q.head = (q.head + 1) % q.size

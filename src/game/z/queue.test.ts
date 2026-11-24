@@ -6,9 +6,9 @@ import {
   qLen,
 } from '@/game/z'
 
-describe('queue (port of z-queue)', () => {
+describe('Queue (port of z-queue)', () => {
   
-  it('Сreate new queue', () => {
+  it('Create new queue', () => {
     const q = qNew(0)
     expect(q.size).toBe(1)
     expect(q.head).toBe(0)
@@ -47,18 +47,18 @@ describe('queue (port of z-queue)', () => {
     expect(qLen(q)).toBe(0)
   })
 
-  it('throws on push beyond size', () => {
+  it('Throws on push beyond size', () => {
     const q = qNew(3)
     qPush(q, 1)
     qPush(q, 2)
     qPush(q, 3)
 
-    expect(() => qPush(q, 4)).toThrow('queue overflow')
+    expect(() => qPush(q, 4)).toThrow('Queue overflow')
   })
 
-  it('throws on pop from empty queue', () => {
+  it('Throws on pop from empty queue', () => {
     const q = qNew(3)
 
-    expect(() => qPop(q)).toThrow('queue underflow')
+    expect(() => qPop(q)).toThrow('Queue underflow')
   })
 })
