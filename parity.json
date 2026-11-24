@@ -20,7 +20,7 @@
           "upstream": "src/z-type.h / src/z-type.c",
           "typescript": "src/game/z/type.ts",
           "status": "partial",
-          "notes": "Loc + helpers (locEq, locSum, …); no randLoc (needs z-rand), no point_set / grouper yet; camelCase; Loc is readonly, always create new object. Just for test.",
+          "notes": "Loc + helpers (locEq, locSum, …); no randLoc (needs z-rand), no point_set / grouper yet; camelCase; Loc is readonly, always create new object.",
           "functions": [
             { "id": "loc", "c": "loc", "ts": "loc", "done": true },
             { "id": "loc_eq", "c": "loc_eq", "ts": "locEq", "done": true },
@@ -39,9 +39,34 @@
         {
           "id": "z-rand",
           "upstream": "src/z-rand.h / src/z-rand.c",
-          "typescript": "src/game/z/",
-          "status": "stub",
-          "notes": "RNG for gen/combat"
+          "typescript": "src/game/z/rand.ts",
+          "status": "partial",
+          "notes": "Core WELL1024a + LCRNG + Rand_state_init ported; types RandomValue / RandomChance / Aspect present; no Rand_div / randint* / damroll / m_bonus / randcalc yet. JS uses Math.imul + >>> 0 for uint32 parity.",
+          "functions": [
+            { "id": "lcrng", "c": "LCRNG", "ts": "lcrng", "done": true },
+            { "id": "wellrng1024a", "c": "WELLRNG1024a", "ts": "wellRng1024a", "done": true },
+            { "id": "rand_state_init", "c": "Rand_state_init", "ts": "randStateInit", "done": true },
+            { "id": "rand_init", "c": "Rand_init", "ts": "randInit", "done": false },
+            { "id": "rand_div", "c": "Rand_div", "ts": "randDiv", "done": false },
+            { "id": "randint0", "c": "randint0", "ts": "randint0", "done": false },
+            { "id": "randint1", "c": "randint1", "ts": "randint1", "done": false },
+            { "id": "rand_spread", "c": "rand_spread", "ts": "randSpread", "done": false },
+            { "id": "one_in", "c": "one_in_", "ts": "oneIn", "done": false },
+            { "id": "rand_range", "c": "rand_range", "ts": "randRange", "done": false },
+            { "id": "rand_normal", "c": "Rand_normal", "ts": "randNormal", "done": false },
+            { "id": "rand_sample", "c": "Rand_sample", "ts": "randSample", "done": false },
+            { "id": "rand_simple", "c": "Rand_simple", "ts": "randSimple", "done": false },
+            { "id": "damroll", "c": "damroll", "ts": "damroll", "done": false },
+            { "id": "damcalc", "c": "damcalc", "ts": "damcalc", "done": false },
+            { "id": "m_bonus", "c": "m_bonus", "ts": "mBonus", "done": false },
+            { "id": "m_bonus_calc", "c": "m_bonus_calc", "ts": "mBonusCalc", "done": false },
+            { "id": "randcalc", "c": "randcalc", "ts": "randcalc", "done": false },
+            { "id": "randcalc_valid", "c": "randcalc_valid", "ts": "randcalcValid", "done": false },
+            { "id": "randcalc_varies", "c": "randcalc_varies", "ts": "randcalcVaries", "done": false },
+            { "id": "random_chance_check", "c": "random_chance_check", "ts": "randomChanceCheck", "done": false },
+            { "id": "random_chance_scaled", "c": "random_chance_scaled", "ts": "randomChanceScaled", "done": false },
+            { "id": "rand_fix", "c": "rand_fix", "ts": "randFix", "done": false }
+          ]
         },
         {
           "id": "z-queue",

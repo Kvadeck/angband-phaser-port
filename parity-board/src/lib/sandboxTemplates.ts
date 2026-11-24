@@ -47,12 +47,17 @@ console.log('zero?', locIsZero(loc(0, 0)))
   {
     id: 'rand',
     label: 'Rand',
-    description: 'Stub until src/game/z/rand.ts lands',
-    code: `// z-rand is not ported yet (src/game/z/rand.ts missing).
-// When it lands, seed / randint / percent will be injected here.
+    description: 'WELL1024a + LCRNG — randStateInit / wellRng1024a / lcrng',
+    code: `// Helpers: randStateInit, wellRng1024a, lcrng
+randStateInit(12345)
 
-console.warn('Rand sandbox: not available yet')
-console.log('Available now: Queue + Loc helpers only')
+const a = [wellRng1024a(), wellRng1024a(), wellRng1024a()]
+randStateInit(12345)
+const b = [wellRng1024a(), wellRng1024a(), wellRng1024a()]
+
+console.log('same seed → same sequence?', JSON.stringify(a) === JSON.stringify(b))
+console.log('seq', a)
+console.log('lcrng(1)', lcrng(1))
 `,
   },
   {
@@ -60,7 +65,7 @@ console.log('Available now: Queue + Loc helpers only')
     label: 'Blank',
     description: 'Empty script — free TypeScript',
     code: `// Free TypeScript playground.
-// In scope: loc*, qNew, qLen, qPush, qPop
+// In scope: loc*, qNew/qLen/qPush/qPop, randStateInit/wellRng1024a/lcrng
 // Use console.log / console.warn / console.error
 
 console.log('ready')

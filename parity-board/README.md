@@ -12,7 +12,7 @@ Browser workbench for the Angband Phaser port: parity ledger, TypeScript sandbox
 | `/dev/sandbox` | Monaco TypeScript playground (Queue / Loc / Rand templates) |
 | `/dev/tests` | Vitest UI status |
 
-Sandbox runs real helpers from `src/game/z` via the `@game` alias (`loc*`, `qNew` / `qPush` / `qPop`, …). Monaco loads from CDN at runtime so the production bundle stays small.
+Sandbox runs real helpers from `src/game/z` via the `@game` alias (`loc*`, `qNew` / `qPush` / `qPop`, `randStateInit` / `wellRng1024a` / `lcrng`, …). Monaco loads from CDN at runtime so the production bundle stays small.
 
 ## Dev
 

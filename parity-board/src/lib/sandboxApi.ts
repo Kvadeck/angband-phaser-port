@@ -8,6 +8,7 @@ import {
   type Loc,
 } from '@game/z/type'
 import { qLen, qNew, qPop, qPush, type Queue } from '@game/z/queue'
+import { lcrng, randStateInit, wellRng1024a } from '@game/z/rand'
 
 /** Runtime bindings injected into sandbox scripts (no imports needed). */
 export const sandboxBindings = {
@@ -21,6 +22,9 @@ export const sandboxBindings = {
   qNew,
   qPop,
   qPush,
+  lcrng,
+  wellRng1024a,
+  randStateInit,
 } as const
 
 export type SandboxBindings = typeof sandboxBindings
@@ -46,6 +50,10 @@ declare const qNew: (size: number) => Queue
 declare const qLen: (q: Queue) => number
 declare const qPush: (q: Queue, item: number) => void
 declare const qPop: (q: Queue) => number | undefined
+
+declare const lcrng: (x: number) => number
+declare const wellRng1024a: () => number
+declare const randStateInit: (seed: number) => void
 
 export {}
 `
