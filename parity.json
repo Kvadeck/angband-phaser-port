@@ -293,7 +293,7 @@
           "upstream": "src/cave.h / src/cave.c",
           "typescript": "src/game/cave/",
           "status": "stub",
-          "notes": "chunk, square, feats"
+          "notes": "chunk, square, feats, kek test, deploy!"
         },
         {
           "id": "cave-square",
