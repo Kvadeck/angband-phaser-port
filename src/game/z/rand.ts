@@ -109,6 +109,7 @@ export const randRange = (A: number, B: number): number => {
 export const randint0 = (m: number): number => randDiv(m)
 export const randint1 = (m: number): number => randDiv(m) + 1
 
+/** Port of damroll — NdS dice (e.g. 2d6). CI smoke touch. */
 export const damroll = (num: number, sides: number): number => {
   if (sides <= 0) return 0
   let sum = 0

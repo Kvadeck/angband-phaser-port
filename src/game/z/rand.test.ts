@@ -133,4 +133,10 @@ describe('Rand (port of z-rand)', () => {
       expect(a).toBe(b)
     })
   })
+
+  it('CI smoke: damroll(1, 1) is always 1', () => {
+    randStateInit(1)
+    expect(damroll(1, 1)).toBe(1)
+  })
 })
+
