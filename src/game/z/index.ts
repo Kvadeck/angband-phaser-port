@@ -23,7 +23,10 @@ export {
 export {
   lcrng,
   wellRng1024a,
-  randStateInit
+  randStateInit,
+  randDiv,
+  randRange,
+  damroll 
 } from './rand'
 
 export const GAME_CORE_READY = false

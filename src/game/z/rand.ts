@@ -68,8 +68,8 @@ export const wellRng1024a = (): number => {
  * Без этого массив из нулей, и «случайные» числа будут одни и те же / плохие.
  */
 export const randStateInit = (seed: number): void => {
-  // Reset index so the same seed always rebuilds the same sequence
-  // (C keeps the old state_i; re-init after use would diverge).
+  // Сбрасываем индекс, чтобы один и тот же seed всегда давал ту же последовательность.
+  // (В C старый state_i сохраняется; повторный init после использования разошёлся бы с нами.)
   stateI = 0
   state[0] = seed >>> 0
 
@@ -82,4 +82,36 @@ export const randStateInit = (seed: number): void => {
     state[j] = (state[j]! + state[stateI]!) >>> 0
     stateI = j
   }
+}
+
+export const randDiv = (m: number): number => {
+  if (m > 0x10000000) throw new Error('randDiv: m too large')
+  if (m <= 1) return (0);
+
+  const n = Math.floor(0x10000000 / m)
+  let r = 0;
+
+  while(true) {
+    r = wellRng1024a();
+    r = Math.floor(((r >>> 4) & 0x0fffffff) / n);
+    if (r < m) break;
+  }
+
+  return r;
+}
+
+export const randRange = (A: number, B: number): number => {
+  if (A === B) return A;
+  if (A > B) throw new Error('randRange: A > B') 
+  return A + randDiv(1 + B - A);
+}
+
+export const randint0 = (m: number): number => randDiv(m)
+export const randint1 = (m: number): number => randDiv(m) + 1
+
+export const damroll = (num: number, sides: number): number => {
+  if (sides <= 0) return 0
+  let sum = 0
+  for (let i = 0; i < num; i++) sum += randint1(sides)
+  return sum
 }
