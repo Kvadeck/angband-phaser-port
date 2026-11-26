@@ -8,6 +8,7 @@ on:
       - 'src/game/**'
       - 'parity.json'
       - 'package-lock.json'
+      - 'scripts/update-parity-board.sh'
       - '.github/workflows/parity-board.yml'
   pull_request:
     branches: [master]
@@ -16,6 +17,7 @@ on:
       - 'src/game/**'
       - 'parity.json'
       - 'package-lock.json'
+      - 'scripts/update-parity-board.sh'
       - '.github/workflows/parity-board.yml'
   workflow_dispatch:
 
@@ -59,3 +61,13 @@ jobs:
           name: parity-board-dist
           path: parity-board/dist
           retention-days: 14
+
+  # Live server: commit dirty parity.json, pull, rebuild dist in place.
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    needs: build
+    runs-on: [self-hosted, parity-server]
+    steps:
+      - name: Sync parity.json, pull, rebuild
+        working-directory: /root/angband-phaser-port
+        run: ./scripts/update-parity-board.sh
